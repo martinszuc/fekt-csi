@@ -1,0 +1,45 @@
+# Ignore MATLAB temporary files and directories
+*.asv
+*.m~
+*.mexw64
+*.mexmaci64
+*.mexa64
+
+# MATLAB autosave files
+*.autosave
+
+# MATLAB project and session files
+*.mat
+slprj/
+*.slx.autosave
+*.slxc
+
+# MATLAB simulink files
+*.mdl.autosave
+*.mdl.original
+
+# Compiled MEX files
+*.mex*
+
+# MATLAB workspace files
+*.mat
+*.mlwork
+*.mlx
+
+# Log files
+*.log
+
+# Deployment kit files
+*.prj
+
+# Matlab Coder generated files
+codegen/
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Ignore workspace-specific files
+*.mat
