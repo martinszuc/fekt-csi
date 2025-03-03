@@ -2,43 +2,49 @@ close all
 clear
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Zde doplnit vstupní parametry %%
+%% Zde doplnit vstupnï¿½ parametry %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+fm = 500;
+fvz = 22050;
+fft_N = 1024;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Zde zavolat funkci dp a hp %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% vstupní parametry funkcí dp a hp:
+[Hc_dp, Hj_dp] = dp(fm, fvz);
+[Hc_hp, Hj_hp] = hp(fm, fvz);
+
+% vstupnï¿½ parametry funkcï¿½ dp a hp:
 % 1) fm
 % 2) fvz
 
-% uvnitø funkce: vıpoèet zesílení g
-% vyuijte funkci parallel (paralelní spojení);
-% pøímá cesta (nebo dopøedná vazba) bez zesílení/zeslabení 
+% uvnitï¿½ funkce: vï¿½poï¿½et zesï¿½lenï¿½ g
+% vyuï¿½ijte funkci parallel (paralelnï¿½ spojenï¿½);
+% pï¿½ï¿½mï¿½ cesta (nebo dopï¿½ednï¿½ vazba) bez zesï¿½lenï¿½/zeslabenï¿½
 
-% vıstupní parametry funkce:
-% 1) vektor koeficientù èitatele (Hc) 
-% 2) vektor koeficientù jmenovatele (Hj)
+% vï¿½stupnï¿½ parametry funkce:
+% 1) vektor koeficientï¿½ ï¿½itatele (Hc)
+% 2) vektor koeficientï¿½ jmenovatele (Hj)
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Zde vypoèítat frekvenèní charakteristiku %%%%
+%%% Zde vypoï¿½ï¿½tat frekvenï¿½nï¿½ charakteristiku %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+f = linspace(20, fvz/2, fft_N/2);
+H1 = freqz(Hc_dp, Hj_dp, 2*pi*f/fvz);
+H2 = freqz(Hc_hp, Hj_hp, 2*pi*f/fvz);
 
 %%%%%%%%%%%%%%%%%%%
-%%% Vykreslení %%%%
+%%% Vykreslenï¿½ %%%%
 %%%%%%%%%%%%%%%%%%%
-% prostudujte, jak je zaobrazení zadáno a pøizpùsobte tomu volání funkcí
-% v pøedchozím kroku
-% u modulového spektra pøidejte v grafu "tick", kterı bude roven -3 dB,
-% a je rozlišeno propustné a nepropustné pásmo 
-% (není tím myšlena úprava v grafickém oknì, ale ji samotné volání grafu)
+% prostudujte, jak je zaobrazenï¿½ zadï¿½no a pï¿½izpï¿½sobte tomu volï¿½nï¿½ funkcï¿½
+% v pï¿½edchozï¿½m kroku
+% u modulovï¿½ho spektra pï¿½idejte v grafu "tick", kterï¿½ bude roven -3 dB,
+% aï¿½ je rozliï¿½eno propustnï¿½ a nepropustnï¿½ pï¿½smo
+% (nenï¿½ tï¿½m myï¿½lena ï¿½prava v grafickï¿½m oknï¿½, ale jiï¿½ samotnï¿½ volï¿½nï¿½ grafu)
 
 figure
 
@@ -46,10 +52,10 @@ subplot(2,1,1)
 semilogx(f, 20*log10(abs(H1)))
 hold on
 semilogx(f, 20*log10(abs(H2)))
-
+yline(-3, 'r--', '-3 dB')
 
 subplot(2,1,2)
-semilogx(f, unwrap(angle(H1))/pi) % angle normálnì odeèítá sudé násobky pi, proto unwrap (rozbalení fáze)
+semilogx(f, unwrap(angle(H1))/pi) % angle normï¿½lnï¿½ odeï¿½ï¿½tï¿½ sudï¿½ nï¿½sobky pi, proto unwrap (rozbalenï¿½ fï¿½ze)
 hold on
 semilogx(f, unwrap(angle(H2))/pi)
 
@@ -57,7 +63,7 @@ semilogx(f, unwrap(angle(H2))/pi)
 subplot(2,1,1)
 set(gca, 'xlim', [20 fvz/2])
 set(gca, 'ylim', [-15 0])
-title('\bfModulová kmitoètová charakteristika')
+title('\bfModulovo kmitoctova charakteristika')
 xlabel('{{\itf}} (Hz) \rightarrow')
 ylabel('Modul (dB) \rightarrow')
 legend('{\it\bfH}_D_P ({\itf})', '{\it\bfH}_H_P ({\itf})')
@@ -65,8 +71,49 @@ grid on
 
 subplot(2,1,2)
 set(gca, 'xlim', [20 fvz/2])
-title('\bfFázová kmitoètová charakteristika')
+title('\bfFazovo kmitoctova charakteristika')
 xlabel('{{\itf}} (Hz) \rightarrow')
-ylabel('Fáze (\pirad) \rightarrow')
+ylabel('Faze (\pirad) \rightarrow')
 legend('{\it\bfH}_D_P ({\itf})', '{\it\bfH}_H_P ({\itf})')
 grid on
+
+function [Hc, Hj] = dp(fm, fvz)
+    g = (tan(pi*fm/fvz) - 1) / (tan(pi*fm/fvz) + 1);
+
+    Hc_phase = [g, 1];
+    Hj_phase = [1, g];
+
+    Hc_direct = 0.5;
+    Hj_direct = 1;
+
+    [Hc, Hj] = parallel(Hc_direct, Hj_direct, 0.5*Hc_phase, Hj_phase);
+end
+
+function [Hc, Hj] = hp(fm, fvz)
+    g = (tan(pi*fm/fvz) - 1) / (tan(pi*fm/fvz) + 1);
+
+    Hc_phase = [g, 1];
+    Hj_phase = [1, g];
+
+    Hc_direct = 0.5;
+    Hj_direct = 1;
+
+    Hc_phase_neg = -0.5*Hc_phase;
+
+    [Hc, Hj] = parallel(Hc_direct, Hj_direct, Hc_phase_neg, Hj_phase);
+end
+
+function [num, den] = parallel(b1, a1, b2, a2)
+    b1 = b1(:).';
+    a1 = a1(:).';
+    b2 = b2(:).';
+    a2 = a2(:).';
+
+    num = conv(b1, a2) + conv(b2, a1);
+    den = conv(a1, a2);
+
+    if den(1) ~= 0
+        num = num / den(1);
+        den = den / den(1);
+    end
+end
