@@ -1,22 +1,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % cv08_zadani_1.m
-% Full MATLAB code for Příklad 1:
-% Demonstrates generating a multi-component signal, computing its DFT,
-% and performing STFT with varying window lengths.
+% Řešení Příkladu 1 – Generování signálu a výpočet STFT s různou délkou okna
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear
 clc
 close all
 
-%% Basic parameters
-Fs = 4000;              % sampling frequency
-Ts = 1/Fs;              % sampling period
-T  = 2;                 % total signal duration in seconds
-N  = T * Fs;            % total number of samples
-t  = 0 : Ts : T - Ts;   % time vector
+%% Základní proměnné
+Fs = 4000;              % vzorkovací frekvence
+Ts = 1/Fs;              % vzorkovací perioda
+T  = 2;                 % délka signálu v sekundách
+N  = T * Fs;            % celkový počet vzorků
+t  = 0 : Ts : T - Ts;   % časový vektor
 
-%% Generate signals
+%% Generování harmonických signálů
 f0 = 1000; f1 = 1250; f2 = 1500; f3 = 1750; f4 = 500;
 sin0 = sin(2*pi*f0*t);
 sin1 = sin(2*pi*f1*t);
@@ -24,10 +22,10 @@ sin2 = sin(2*pi*f2*t);
 sin3 = sin(2*pi*f3*t);
 sin4 = sin(2*pi*f4*t);
 
-%% Construct a signal with interruptions and frequency segments
-% Short "blip" from sin4 repeated, plus segments of sin0..sin3
-y2 = [zeros(N/100, 1)'  sin4(1 : N/100)]';    % short piece
-y2 = repmat(y2, 50, 1);                      % repeat that piece
+%% Přerušovaný signál
+y2 = [zeros(N/100, 1)'  sin4(1 : N/100)]';
+y2 = repmat(y2, 50, 1);
+
 y  = y2 + [ ...
     sin0(1 : floor(N/4)-1),          ...
     sin1(floor(N/4) : floor(N/2)-1), ...
@@ -35,19 +33,18 @@ y  = y2 + [ ...
     sin3(floor(3*N/4) : end)        ...
     ]';
 
-%% Optional playback
-% soundsc(y, Fs);
+%% Přehrání signálu
+%soundsc(y, Fs);
 
-%% Compute DFT for the entire 2 s signal
-% (Calls our local mydft function below.)
+%% Výpočet DFT
 mydft(y, Fs);
 
-%% Plot STFT with different window lengths
+%% Výpočet STFT a zobrazení pro různé délky oken
 figure
 
-% Window length = 0.1 s
+% Délka okna = 0.1 s
 subplot(2,2,1)
-winLength = 0.1;  % seconds
+winLength = 0.1;
 [fAxis, SpecCoeffs] = MySTFT(y, Fs, winLength);
 imagesc(linspace(0, T, size(SpecCoeffs,2)), fAxis', log10(abs(SpecCoeffs).^2));
 title(['Délka okna: ' num2str(winLength) ' s'])
@@ -55,9 +52,9 @@ set(gca,'YDir','normal')
 xlabel('t (s)')
 ylabel('f (Hz)')
 
-% Window length = 0.05 s
+% Délka okna = 0.05 s
 subplot(2,2,2)
-winLength = 0.05; % seconds
+winLength = 0.05;
 [fAxis, SpecCoeffs] = MySTFT(y, Fs, winLength);
 imagesc(linspace(0, T, size(SpecCoeffs,2)), fAxis', log10(abs(SpecCoeffs).^2));
 title(['Délka okna: ' num2str(winLength) ' s'])
@@ -65,9 +62,9 @@ set(gca,'YDir','normal')
 xlabel('t (s)')
 ylabel('f (Hz)')
 
-% Window length = 0.02 s
+% Délka okna = 0.02 s
 subplot(2,2,3)
-winLength = 0.02; % seconds
+winLength = 0.02;
 [fAxis, SpecCoeffs] = MySTFT(y, Fs, winLength);
 imagesc(linspace(0, T, size(SpecCoeffs,2)), fAxis', log10(abs(SpecCoeffs).^2));
 title(['Délka okna: ' num2str(winLength) ' s'])
@@ -75,9 +72,9 @@ set(gca,'YDir','normal')
 xlabel('t (s)')
 ylabel('f (Hz)')
 
-% Window length = 0.01 s
+% Délka okna = 0.01 s
 subplot(2,2,4)
-winLength = 0.01; % seconds
+winLength = 0.01;
 [fAxis, SpecCoeffs] = MySTFT(y, Fs, winLength);
 imagesc(linspace(0, T, size(SpecCoeffs,2)), fAxis', log10(abs(SpecCoeffs).^2));
 title(['Délka okna: ' num2str(winLength) ' s'])
@@ -85,24 +82,18 @@ set(gca,'YDir','normal')
 xlabel('t (s)')
 ylabel('f (Hz)')
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Local function: MYSTFT
-% Computes the Short-Time Fourier Transform for a given signal x,
-% sampling rate Fs, and window length WinLength (in seconds).
-% Returns the vector of positive frequencies 'f' and
-% the STFT matrix 'SpecCoeffs'.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Funkce: MySTFT – výpočet krátkodobé Fourierovy transformace
 function [f, SpecCoeffs] = MySTFT(x, Fs, WinLength)
-    % Convert window length from seconds to samples
+    % Převod délky okna na počet vzorků
     L = round(WinLength * Fs);
     
-    % Hann window
+    % Okno – Hannovo
     w = hann(L,'periodic');
     
-    % Ensure x is a column
+    % Vstupní signál jako sloupcový vektor
     x = x(:);
     
-    % Zero-pad x if needed so that length(x) is multiple of L
+    % Doplnění nulami, pokud délka není násobkem okna
     Nx = length(x);
     remainder = mod(Nx, L);
     if remainder ~= 0
@@ -110,87 +101,48 @@ function [f, SpecCoeffs] = MySTFT(x, Fs, WinLength)
         Nx = length(x);
     end
     
-    % Number of frames (no overlap used here)
+    % Počet segmentů
     numFrames = Nx / L;
     
-    % Allocate space for STFT matrix
+    % Předalokace STFT matice
     SpecCoeffs = zeros(floor(L/2)+1, numFrames);
-    
-    % Frequency vector for entire FFT
     freqAxis = (0 : L-1)*(Fs/L);
-    
-    % Loop over frames
+
+    % Smyčka přes segmenty
     for idx = 1 : numFrames
         startIdx = (idx-1)*L + 1;
         endIdx   = startIdx + L - 1;
         
-        segment = x(startIdx:endIdx);
-        segmentWindowed = segment .* w;
-        X = fft(segmentWindowed);
-        
-        % Keep only positive frequencies
+        segment = x(startIdx:endIdx) .* w;
+        X = fft(segment);
         SpecCoeffs(:, idx) = X(1 : floor(L/2) + 1);
     end
     
-    % Return frequency axis for positive frequencies as a column
+    % Vrácení kladných frekvencí
     f = freqAxis(1 : floor(L/2) + 1).';
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Local function: MYDFT
-% Example discrete Fourier transform. 
-% Usage: mydft(signal, Fs)
-% or:    [X,f] = mydft(signal, Fs, fVector)
-% Where fVector can be either a vector of frequencies or a max frequency.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Funkce: mydft – výpočet diskrétní Fourierovy transformace
 function [X, f] = mydft(x, Fs, f)
-    if nargin < 1
-        error('Must provide signal vector x at least.');
-    end
-    
-    % Ensure x is column vector
+    if nargin < 1, error('Musí být zadán signál x'); end
     x = x(:);
     N = length(x);
-    
-    % Default Fs if not given
-    if nargin < 2
-        Fs = 1;
-    end
-    
-    % If f is not given, compute DFT for 0..(N-1)/N * Fs 
-    if nargin < 3
-        f = ((0:N-1) - floor((N-1)/2))/N * Fs;
-    end
-    
-    % If f is a single scalar, interpret it as the max frequency
-    if isscalar(f)
-        f = -f : Fs/N : f;
-    end
-    
-    % Allocate result
+    if nargin < 2, Fs = 1; end
+    if nargin < 3, f = ((0:N-1) - floor((N-1)/2))/N * Fs; end
+    if isscalar(f), f = -f : Fs/N : f; end
+
     X = zeros(length(f), 1);
-    n = (0 : N-1).';
-    
-    % Compute the DFT
-    for k = 1 : length(f)
+    n = (0:N-1).';
+
+    for k = 1:length(f)
         X(k) = (1/N) * (x.' * exp(-1i*2*pi*f(k)*n / Fs));
     end
-    
-    % If no output requested, plot
+
     if nargout < 1
         figure
         subplot(2,1,1)
-        plot(f, abs(X))
-        grid on
-        title('Magnitude of Discrete Fourier Transform')
-        xlabel('Frequency [Hz]')
-        ylabel('|X(f)|')
-        
+        plot(f, abs(X)), grid on, title('Modul DFT'), xlabel('f (Hz)'), ylabel('|X(f)|')
         subplot(2,1,2)
-        plot(f, angle(X)*180/pi)
-        grid on
-        title('Phase of Discrete Fourier Transform')
-        xlabel('Frequency [Hz]')
-        ylabel('Phase [degrees]')
+        plot(f, angle(X)*180/pi), grid on, title('Fáze DFT'), xlabel('f (Hz)'), ylabel('Fáze (°)')
     end
 end
